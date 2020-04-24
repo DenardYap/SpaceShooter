@@ -12,17 +12,21 @@ int main(int argc, char* argv[]) { //command line arguments
 	}
 
 	game.spawn_alien();
+
 	while (game.is_it_running() == true) {
-			game.handle_event();
-			game.render();
-			game.update();
-			
-			//run as long as is_running is true
-		
+		game.handle_event();
+		game.render();
+		game.update();
+
+		//run as long as is_running is true
+
+	}
+	
+	while (game.is_it_running() == false) {
+		game.endgame_menu();
 	}
 	game.clean();
 
 	return 0;
 }
-
 
