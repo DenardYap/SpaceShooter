@@ -21,25 +21,25 @@ Game::Game() {
 }
 
 void Game::renderMenu() {
-	
+
 	SDL_RenderClear(renderer); //clear the previous screen
 	SDL_RenderCopy(renderer, space, NULL, &space_des); //paint background picture!
 	SDL_RenderCopy(renderer, sMenuBG, NULL, &sMenuBG_des); //paint my picture!
 
 	if (mouse_x >= 285 && mouse_y >= 425
-	 && mouse_x <= 615 && mouse_y <= 525) { //when the mouse is over the button
+		&& mouse_x <= 615 && mouse_y <= 525) { //when the mouse is over the button
 		SDL_RenderCopy(renderer, sButtonHover, NULL, &sBG_des);//show start hover button
-		
-		if (mouse_click == true){
+
+		if (mouse_click == true) {
 			clicked = true;
 			SDL_RenderCopy(renderer, sButtonClick, NULL, &sBG_des);//show click button
 		}
-		if (mouse_click == false && clicked == true){
+		if (mouse_click == false && clicked == true) {
 			is_running = true;
 		}
-		
+
 	}
-	else { 
+	else {
 		SDL_RenderCopy(renderer, sButton, NULL, &sBG_des);//show start button
 	}
 
@@ -65,6 +65,9 @@ void Game::loadImages_setInfos() {
 	sMenuBG = IMG_LoadTexture(renderer, "images/Start Menu Background.png");
 	scorebar = IMG_LoadTexture(renderer, "images/scorebar.png");
 	end_line = IMG_LoadTexture(renderer, "images/line.png");
+	gameover = IMG_LoadTexture(renderer, "images/gameover.jpg");
+	endMenu = IMG_LoadTexture(renderer, "images/endgame.jpg");
+
 	setDes(ship_des, 900 / 2 - 50, 580, 64, 64);
 	setDes(space_des, 0, 0, 900, 650);
 	setDes(star_des, 0, -650, 900, 1300);
@@ -80,7 +83,7 @@ void Game::loadImages_setInfos() {
 	setDes(sBG_des, 285, 425, 330, 100); // Button position
 	setDes(sMenuBG_des, 0, 0, 900, 650);
 	setDes(scorebar_des, 10, 10, 300, 80);
-	
+
 	//---- load texts ----//
 
 	my_font = TTF_OpenFont("font/Roboto-Bold.ttf", 400); //load our font
@@ -90,7 +93,7 @@ void Game::loadImages_setInfos() {
 	score_text = SDL_CreateTextureFromSurface(renderer, text_surface);
 	setDes(score_rect, 30, 25, 200, 50);
 	SDL_FreeSurface(text_surface); //have to free it after using, something like what we did in clean() function
-	
+
 	wave_font = TTF_OpenFont("font/RobotoCondensed-BoldItalic.ttf", 600); //load our font
 	wave_color = { 255, 253, 217 }; //set the color of font to white
 	SDL_Surface* wave_surface = TTF_RenderText_Solid(wave_font, wave_text.c_str(), wave_color);
@@ -98,10 +101,12 @@ void Game::loadImages_setInfos() {
 	w_text = SDL_CreateTextureFromSurface(renderer, wave_surface);
 	setDes(wave_rect, 665, 10, 200, 80);
 	SDL_FreeSurface(wave_surface); //have to free it after using, something like what we did in clean() function
-	
+
 	//-------------------//
-	
+
 	setDes(end_des, 0, 565, 900, 10);
+
+	setDes(endScreen_des, 0, 0, 900, 650);
 }
 
 void Game::setDes(SDL_Rect& rect, int hori, int vert, int width, int height) {
@@ -116,7 +121,7 @@ void Game::handle_event() {
 	SDL_Event event; //detect what you do to your computer
 					 //example: moving your mouse, pressing a button on your keyboard
 	SDL_GetMouseState(&mouse_x, &mouse_y);
-	
+
 	while (SDL_PollEvent(&event) != 0) { //when an event is detected, no matter what kind of event
 
 		switch (event.type) { //more in-depth detection
@@ -156,7 +161,7 @@ void Game::handle_event() {
 				mouse_click = true; //only let left click works
 			}
 			break;
-	
+
 		case SDL_MOUSEBUTTONUP:
 			if (event.button.button == SDL_BUTTON_LEFT) {
 				mouse_click = false; //only let left click works
@@ -169,17 +174,17 @@ void Game::handle_event() {
 		}
 
 	}
-	 //get mouse coordinate
+	//get mouse coordinate
 }
 
 void Game::update() { //update things on the screen
 			//planets keep moving at background
-	planet1_des.y +=1; 
-	planet2_des.y +=1;
-	planet3_des.y +=1;
-	planet4_des.y +=1;
-	planet5_des.y +=1;
-	planet6_des.y +=1;
+	planet1_des.y += 1;
+	planet2_des.y += 1;
+	planet3_des.y += 1;
+	planet4_des.y += 1;
+	planet5_des.y += 1;
+	planet6_des.y += 1;
 	Sleep(10); //threading substitution
 	if (planet1_des.y == 650) {
 		planet1_des.y = -100; //reset
@@ -199,7 +204,7 @@ void Game::update() { //update things on the screen
 	if (planet6_des.y == 650) {
 		planet6_des.y = -100; //reset
 	}
-	
+
 	//white stars keep moving at background
 	star_des.y += 1;
 	if (star_des.y == 0) {
@@ -228,8 +233,8 @@ void Game::update() { //update things on the screen
 	}
 	if (motion_detect[SHOOT] == true) {
 		//Shoot if someone press Spacebar
-		for (int i = 0; i <5; i++ ){
-			if (laser_coordinate[i]==0 && clock() >= laser_time +300){
+		for (int i = 0; i < 5; i++) {
+			if (laser_coordinate[i] == 0 && clock() >= laser_time + 300) {
 				laser_coordinate[i] = 1;
 				laser_time = clock(); //add a time because i want to add a delay on each laser shoot
 										  //so that player cannot spam lasers.
@@ -255,105 +260,113 @@ void Game::render() { //painter function
 	SDL_RenderCopy(renderer, planet4, NULL, &planet4_des);
 	SDL_RenderCopy(renderer, planet5, NULL, &planet5_des);
 	SDL_RenderCopy(renderer, planet6, NULL, &planet6_des);
-	SDL_RenderCopy(renderer,scorebar,NULL, &scorebar_des);
+	SDL_RenderCopy(renderer, scorebar, NULL, &scorebar_des);
 	SDL_RenderCopy(renderer, score_text, NULL, &score_rect);
 	SDL_RenderCopy(renderer, w_text, NULL, &wave_rect);
 	SDL_RenderCopy(renderer, end_line, NULL, &end_des);
+	SDL_RenderCopy(renderer, gameover, NULL, &game_des);
+	
 	// this is a triple for loop, which can arise a lot of problems
 	// like computational cost, run-time delays etc, for example:
 	// the lasers will slow down or speed up depends on where i put it
 	// hence, we have to be very careful
-	
-	for (int laser_count = 0; laser_count < 5; laser_count++){
-		
-		if (laser_coordinate[laser_count] == 1){ 
-			
+if (confirm == true)
+	for (int laser_count = 0; laser_count < 5; laser_count++) {
+
+		if (laser_coordinate[laser_count] == 1) {
+
 			int laser_y = ship_des.y + velocity[laser_count];
 			int laser_x = current_x[laser_count];
 			//
 			velocity[laser_count] -= laser_speed; //minus because going up.
 			setDes(laser_des, laser_x, laser_y, 10, 30);
 			SDL_RenderCopy(renderer, laser, NULL, &laser_des);
-			
-			if (laser_y <= -30){
+
+			if (laser_y <= -30) {
 				laser_coordinate[laser_count] = 0;
 				velocity[laser_count] = 0;
-			}	
-			
+			}
+
 		}
-		
+
 		for (int i = 0; i < 3; i++) { //iterate over the 2D array
 			for (int j = 0; j < 14; j++) {
 				if (aliens_coordinate[i][j] == 1) { //if there's an alien there
 					if (time(NULL) >= time_now + 2) { //move the alien by 3 pixels every 2 seconds
-						time_now += 2; // increment the time by 2 so the condition would meet every 2 seconds
-						increment_value += (3 + alien_speed);
+						time_now += 1; // increment the time by 2 so the condition would meet every 2 seconds
+						increment_value += (30 + alien_speed);
 					}
-					
+
 					int alien_y = 62 * i + 100 + increment_value;
-					int alien_x = 64 * j; 
+					int alien_x = 64 * j;
 					setDes(alien_des, alien_x, alien_y, 62, 49);
 					SDL_RenderCopy(renderer, alien, NULL, &alien_des);
-					
-					
-					if (alien_y+49 >= 570){ //touched the line
-						is_running = false;
-						cout << "You lose!" << endl;
+
+
+					if (alien_y + 49 >= 570) { //touched the line
+						confirm = false;//this statement will let the 3 layers loop run the last time and will trigger the next if statement 
 					}
-				
-					
-					if (laser_des.x+10 >= alien_des.x && laser_des.x <= alien_des.x +62 
-					&& laser_des.y <= alien_des.y + 49 && laser_des.y >= alien_des.y){
-						
+
+
+					if (laser_des.x + 10 >= alien_des.x && laser_des.x <= alien_des.x + 62
+						&& laser_des.y <= alien_des.y + 49 && laser_des.y >= alien_des.y) {
+
 						//Update score
 						current_score += 5;
 						text = "Score: " + to_string(current_score);
 						SDL_Surface* text_surface = TTF_RenderText_Solid(my_font, text.c_str(), my_color);
 						score_text = SDL_CreateTextureFromSurface(renderer, text_surface);
-						SDL_FreeSurface(text_surface); 
+						SDL_FreeSurface(text_surface);
 						//-------------
-						
+
 						aliens_coordinate[i][j] = 0;
 						alien_count -= 1;
 						laser_coordinate[laser_count] = 0;
 						velocity[laser_count] = 0;
 						end_game_pause = clock();
-						}
-					
-					
-				
 					}
-					
-				}
-			
-					// sometiems the laser blocked by alien 
-					// 
-					
-			}	
-			if (alien_count == 0){
-					
-					motion_detect[SHOOT] = false; //prohibit shooting at this time
-					if (clock() >= end_game_pause + 2500){ //pause for roughly 2 seconds
-						if (alien_limit <42){
-							alien_limit += 1;
-							}
-						spawn_alien();
-						increment_value = 0;
-						alien_speed += 1;
-						current_wave += 1;
-						
-						//update wave
-						string wave_text = "Wave " + to_string(current_wave);
-						SDL_Surface* wave_surface = TTF_RenderText_Solid(wave_font, wave_text.c_str(), wave_color);
-						w_text = SDL_CreateTextureFromSurface(renderer, wave_surface);
-						SDL_FreeSurface(wave_surface); 
-					}
-				}
-		}
-	SDL_RenderCopy(renderer, spaceship, NULL, &ship_des); //to draw on a new paper
 
+				}
+
+			}
+
+			// sometiems the laser blocked by alien 
+			// 
+
+		}
+		if (alien_count == 0) {
+
+			motion_detect[SHOOT] = false; //prohibit shooting at this time
+			if (clock() >= end_game_pause + 2500) { //pause for roughly 2 seconds
+				if (alien_limit < 42) {
+					alien_limit += 1;
+				}
+				spawn_alien();
+				increment_value = 0;
+				alien_speed += 1;
+				current_wave += 1;
+
+				//update wave
+				string wave_text = "Wave " + to_string(current_wave);
+				SDL_Surface* wave_surface = TTF_RenderText_Solid(wave_font, wave_text.c_str(), wave_color);
+				w_text = SDL_CreateTextureFromSurface(renderer, wave_surface);
+				SDL_FreeSurface(wave_surface);
+			}
+		}
+	}
+	SDL_RenderCopy(renderer, spaceship, NULL, &ship_des); //to draw on a new paper
 	SDL_RenderPresent(renderer); //start painting! 
-    
+
+if (confirm == false) {
+setDes(game_des, 380 , 300, 120, 80);
+SDL_RenderCopy(renderer, gameover, NULL, &game_des);
+SDL_RenderPresent(renderer); //start painting! 
+Sleep(5000);
+is_running = false;
+cout << "You lose!" << endl;
+}
+	
+
 }
 
 void Game::spawn_alien() {
@@ -371,6 +384,18 @@ void Game::spawn_alien() {
 			alien_count += 1;
 		}
 	}
+}
+
+void Game::endgame_menu() {
+
+	cout << "gameover menu" << endl;
+	SDL_RenderClear(renderer);//clear previous screen
+	SDL_RenderCopy(renderer, endMenu, NULL, &endScreen_des);//paint endmenu
+	SDL_RenderPresent(renderer);//start painting
+	Sleep(10000);
+
+	is_running = true;
+
 }
 
 bool Game::is_it_running() {
@@ -396,7 +421,7 @@ void Game::clean() { //DrAzeem mentioned before, dynamic memory allocation
 	SDL_DestroyTexture(alien);
 	SDL_DestroyTexture(score_text);
 	SDL_DestroyTexture(sMenuBG);
-	SDL_DestroyTexture(scorebar);
+	SDL_DestroyTexture(scorebar);   
 	SDL_DestroyTexture(end_line);
 	SDL_Quit();
 
