@@ -1,52 +1,86 @@
-//implementation
+/**** CONTRIBUTION **** 
+	
+	Bernard: Logic of Laser shooting (5 laser maximum), Logic of randomly spawn alien around the space, Logic of waves and score points (increment and record of score points, new waves etc), introduced the library SDL to his fellow friends, logic of moving spaceship, optimized codes .
+	Emang: Worked on graphics of spaceships during gameplay and related logics
+	Nazrin H.: Created button design for all three stages (Default, Hover, Click), Logic for creating Start Menu window, Logic for start button’s animation, Logic for start button to run game. 
+	Chin Chong Yi (Leo) : Worked on the base logic of the laser (where the laser appears upon activation) , endgame animation and endgame screen.
+	Sik Jerlson: Aliens, ScoreBar Logic 
+	Idlan azmi:designed the structure of the scoreboard using an editing platform and advised the idea of the wave count in-game. 
+	Clement Lim: Pointed out bugs and made relevant suggestions with attempts to optimize source code
+	Ethan and Abdullah : Worked on hit detection and related parts of the code
+	Nurfara: Worked on overall retrowave theme, graphics of start screen, end screen and related logics
+	Ooi Por Zhang: Fixed bugs and provided logic on endgame screen
+	Aisyah Nadhirah: Designed the graphics of the planets during gameplay and related logics
+	Ng Jia Xin: Designed background and background stars, vectorization of rocket design
+	
+*/
+
+/**** How to link SDL2 to your compiler (For Windows 10, Dev C++) ****
+1) Go to https://www.libsdl.org/download-2.0.php, under development libraries download SDL2-devel-2.0.12-mingw.tar.gz (MinGW 32/64-bit)
+2) Extract the folder and remember the folder name, in this case, let’s assume the folder name is SDL2-2.0.12
+3) Go to Dev C++, under Tools, click Compiler Options
+4) At General section, at the second box, type the following linker command -lSDL2main -lSDL2
+5) At Directories section, go to Libraries, click the add files icon, find SDL2-2.0.12\x86_64-w64-mingw32\lib and click ADD 
+6) Go to C++ Includes, click the add files icon, find SDL2-2.0.12\x86_64-w64-mingw32\include\SDL2, click ADD 
+7) Finally, find SDL2.dll under your SDL2-2.0.12\x86_64-w64-mingw32\bin folder, copy the dll files and put it in where you saves your source code. 
+8) For example, you want to save your spaceshooter.cpp under C:/User/Azeem, you then also copy the SDL2.dll files into C:/User/Azeem 
+9) Done! Import the library by writing  #include <SDL.h>
+10) Notice we also used SDL2.ttf and SDL2.image libraries, the procedure of linking them are identical, the linker commands are  -lSDL2_image  -lSDL2_ttf
+Note: If you want to link ttf and images libraires, there are more than one dll files, copy all the dll files in the bin directory of the libraries, there are more than 1
+*/
+
+// implementation 
 #include "SpaceShooter.h"
 using namespace std;
 
 Game::Game() {
-	if (SDL_Init(SDL_INIT_EVERYTHING) == 0) { //Initialization is required
-		window = SDL_CreateWindow("SpaceShooter", 100, 100, 900, 650, false);
-		if (window) { //this is gonna run if window created successfully
+	if (SDL_Init(SDL_INIT_EVERYTHING) == 0) { // initialization
+		window = SDL_CreateWindow("SpaceShooter", 100, 100, 900, 650, false); // create a window with 900 width, 650 height
+		if (window) { // this will run once window created successfully
 			cout << "Window created." << endl;
 		}
 		renderer = SDL_CreateRenderer(window, -1, 0);
-		if (renderer) { //same for renderer
+		if (renderer) { // this will run once renderer created successfully
 			cout << "Renderer created." << endl;
 		}
 	}
 	else {
-		is_running = false; //rare case, if not, set it to false and program will not keep on running
+		is_running = false; // if initialization fails (rare case),
+		SDL_Quit();			// the program will stop running
 	}
-	TTF_Init(); //initialize TTF, same thing as SDL_Init
-	loadImages_setInfos(); //load all our images and set their attributes
+	TTF_Init(); // initialize TTF, similar to SDL_Init
+	loadImages_setInfos(); // load all images and set their attributes
 }
 
 void Game::renderMenu() {
-
-	SDL_RenderClear(renderer); //clear the previous screen
-	SDL_RenderCopy(renderer, space, NULL, &space_des); //paint background picture!
-	SDL_RenderCopy(renderer, sMenuBG, NULL, &sMenuBG_des); //paint my picture!
+	
+	SDL_RenderClear(renderer); // clear the previous screen
+	SDL_RenderCopy(renderer, space, NULL, &space_des); 
+	SDL_RenderCopy(renderer, sMenuBG, NULL, &sMenuBG_des);
 
 	if (mouse_x >= 285 && mouse_y >= 425
-		&& mouse_x <= 615 && mouse_y <= 525) { //when the mouse is over the button
-		SDL_RenderCopy(renderer, sButtonHover, NULL, &sBG_des);//show start hover button
-
-		if (mouse_click == true) {
+		&& mouse_x <= 615 && mouse_y <= 525) { // detects when the mouse is over the start button
+		
+		SDL_RenderCopy(renderer, sButtonHover, NULL, &sBG_des);// shows start hover button
+		if (mouse_click == true) { // detects when there is a mouse click
 			clicked = true;
-			SDL_RenderCopy(renderer, sButtonClick, NULL, &sBG_des);//show click button
+			SDL_RenderCopy(renderer, sButtonClick, NULL, &sBG_des); // shows clicked button
+			}
+				if (mouse_click == false && clicked == true){
+					is_running = true;
+					}
+
 		}
-		if (mouse_click == false && clicked == true) {
-			is_running = true;
+		
+	else{
+		SDL_RenderCopy(renderer, sButton, NULL, &sBG_des); // shows start button
 		}
 
-	}
-	else {
-		SDL_RenderCopy(renderer, sButton, NULL, &sBG_des);//show start button
-	}
+	SDL_RenderPresent(renderer); // paint everything I previously SDL_RenderCopied
+  }
 
-	SDL_RenderPresent(renderer);
-}
-
-void Game::loadImages_setInfos() {
+void Game::loadImages_setInfos()	// assigning images to attributes
+ {
 
 	spaceship = IMG_LoadTexture(renderer, "images/spaceship.png");
 	space = IMG_LoadTexture(renderer, "images/BG Color only.png");
@@ -71,189 +105,194 @@ void Game::loadImages_setInfos() {
 	setDes(ship_des, 900 / 2 - 50, 580, 64, 64);
 	setDes(space_des, 0, 0, 900, 650);
 	setDes(star_des, 0, -650, 900, 1300);
-	setDes(planet1_des, 700, 450, 150, 100);
-	setDes(planet2_des, 20, 350, 150, 100);
-	setDes(planet3_des, 300, 400, 50, 33);
-	setDes(planet4_des, 150, 50, 200, 133);
-	setDes(planet5_des, 300, 600, 150, 100);
-	setDes(planet6_des, 570, 250, 150, 100);
-	setDes(laser_des, -1, -1, 0, 0);  // LOGIC: set w and h to 0 first,
-									 // so it appears nothing initially,
-									 // when someone pressed spacebar, assign a w and h
-	setDes(sBG_des, 285, 425, 330, 100); // Button position
+	setDes(planet1_des, 700, 450, 177, 100);
+	setDes(planet2_des, 20, 350, 177, 100);
+	setDes(planet3_des, 300, 400, 59, 33);
+	setDes(planet4_des, 150, 50, 212, 133);
+	setDes(planet5_des, 300, 600, 177, 100);
+	setDes(planet6_des, 570, 250, 177, 100);
+	setDes(laser_des, -1, -1, 0, 0);  
+	setDes(sBG_des, 285, 425, 330, 100); 
 	setDes(sMenuBG_des, 0, 0, 900, 650);
 	setDes(scorebar_des, 10, 10, 300, 80);
 
 	//---- load texts ----//
 
-	my_font = TTF_OpenFont("font/Roboto-Bold.ttf", 400); //load our font
-	my_color = { 255, 255, 255 }; //set the color of font to white
-	SDL_Surface* text_surface = TTF_RenderText_Solid(my_font, text.c_str(), my_color);
-	//not declaring this in private because we only need to use it locally
-	score_text = SDL_CreateTextureFromSurface(renderer, text_surface);
-	setDes(score_rect, 30, 25, 200, 50);
-	SDL_FreeSurface(text_surface); //have to free it after using, something like what we did in clean() function
+	score_font = TTF_OpenFont("font/Roboto-Bold.ttf", 400);  // load font
+	score_color = { 255, 255, 255 }; // set font color to white
+	SDL_Surface* text_surface = TTF_RenderText_Solid(score_font, text.c_str(), score_color); //create the surface from plain text
+	// not declaring this in private because we only need to use it locally
+	score_text = SDL_CreateTextureFromSurface(renderer, text_surface); // and then create the texture from the surface we created
+	setDes(score_rect, 30, 25, 200, 50); 
+	SDL_FreeSurface(text_surface); // have to free it after using, something like what we did in clean() function
 
-	wave_font = TTF_OpenFont("font/RobotoCondensed-BoldItalic.ttf", 600); //load our font
-	wave_color = { 255, 253, 217 }; //set the color of font to white
+	wave_font = TTF_OpenFont("font/RobotoCondensed-BoldItalic.ttf", 600); // load font
+	wave_color = { 255, 253, 217 }; // set font color to light yellow
 	SDL_Surface* wave_surface = TTF_RenderText_Solid(wave_font, wave_text.c_str(), wave_color);
-	//not declaring this in private because we only need to use it locally
 	w_text = SDL_CreateTextureFromSurface(renderer, wave_surface);
 	setDes(wave_rect, 665, 10, 200, 80);
-	SDL_FreeSurface(wave_surface); //have to free it after using, something like what we did in clean() function
+	SDL_FreeSurface(wave_surface); 
 
 	//-------------------//
 
 	setDes(end_des, 0, 565, 900, 10);
-
 	setDes(endScreen_des, 0, 0, 900, 650);
 }
 
 void Game::setDes(SDL_Rect& rect, int hori, int vert, int width, int height) {
+	//function to set picture's coordinate and width and height
 	rect.x = hori;
 	rect.y = vert;
 	rect.w = width;
 	rect.h = height;
 }
 
-void Game::handle_event() {
 
-	SDL_Event event; //detect what you do to your computer
-					 //example: moving your mouse, pressing a button on your keyboard
-	SDL_GetMouseState(&mouse_x, &mouse_y);
+void Game::handle_event() { // this function handles all inputs
+							// from the computer to the game
+							// i.e: mouse movements 
+							// and keyboard inputs.
 
-	while (SDL_PollEvent(&event) != 0) { //when an event is detected, no matter what kind of event
+	SDL_Event event; // initialization
+	SDL_GetMouseState(&mouse_x, &mouse_y); // get mouse coordinate
 
-		switch (event.type) { //more in-depth detection
+	while (SDL_PollEvent(&event) != 0) { // triggers when an input is detected
 
-		case SDL_QUIT: //SDL_QUIT means someone click the "X" on top-right
-			is_running = false;
-			cout << "Quitting program..." << endl;
-			SDL_Quit();
-			break;
-		case SDL_KEYDOWN: // When someone clicked the keyboard's button
+		switch (event.type) { // specific detection definitions
 
-			if (event.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
-				motion_detect[MOVE_RIGHT] = true;
-			}
-			if (event.key.keysym.scancode == SDL_SCANCODE_LEFT) {
-				motion_detect[MOVE_LEFT] = true;
-			}
-			if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
-				motion_detect[SHOOT] = true;
+			case SDL_QUIT: // when the user clicks "X" at top-right
+				is_running = false;
+				cout << "Quitting program..." << endl;
+				SDL_Quit();
 				break;
-
-		case SDL_KEYUP: //When someone done clicking and leave the button
-			if (event.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
-				motion_detect[MOVE_RIGHT] = false;
-			}
-			if (event.key.keysym.scancode == SDL_SCANCODE_LEFT) {
-				motion_detect[MOVE_LEFT] = false;
-			}
-			if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) {
-				motion_detect[SHOOT] = false;
-			}
-			cout << "Someone left his hand off the keyboard" << endl;
-			break;
-
-		case SDL_MOUSEBUTTONDOWN:
-			if (event.button.button == SDL_BUTTON_LEFT) {
-				mouse_click = true; //only let left click works
-			}
-			break;
-
-		case SDL_MOUSEBUTTONUP:
-			if (event.button.button == SDL_BUTTON_LEFT) {
-				mouse_click = false; //only let left click works
-			}
-			break;
-
-		default:
-			break;
+				
+			case SDL_KEYDOWN: // whenever the user pressed a keyboard button
+	
+				if (event.key.keysym.scancode == SDL_SCANCODE_RIGHT) { // pressed arrow right
+					motion_detect[MOVE_RIGHT] = true;
+					cout << "Motion detect: ";
+					cout << motion_detect[MOVE_RIGHT] << endl;
+				}
+				if (event.key.keysym.scancode == SDL_SCANCODE_LEFT) { // pressed arrow left
+					motion_detect[MOVE_LEFT] = true;
+				}
+				if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) { // pressed spacebar
+					motion_detect[SHOOT] = true;
+				}
+				break;
+	
+			case SDL_KEYUP: // whenever the user released a keyboard button
+				if (event.key.keysym.scancode == SDL_SCANCODE_RIGHT) { // released arrow right
+					motion_detect[MOVE_RIGHT] = false;
+				}
+				if (event.key.keysym.scancode == SDL_SCANCODE_LEFT) { // released arrow left
+					motion_detect[MOVE_LEFT] = false;
+				}
+				if (event.key.keysym.scancode == SDL_SCANCODE_SPACE) { // released spacebar
+					motion_detect[SHOOT] = false;
+				}
+				cout << "Someone left his hand off the keyboard" << endl;
+				break;
+	
+			case SDL_MOUSEBUTTONDOWN: // whenever the user pressed a mouse button
+				if (event.button.button == SDL_BUTTON_LEFT) { // let only the left click works
+					mouse_click = true; 
+				}
+				break;
+	
+			case SDL_MOUSEBUTTONUP: // whenever the user released a mouse button
+				if (event.button.button == SDL_BUTTON_LEFT) {
+					mouse_click = false; 
+				}
+				break;
+	
+			default:
+				break;
 			}
 		}
 
-	}
-	//get mouse coordinate
 }
+	// get mouse coordinate
 
-void Game::update() { //update things on the screen
-			//planets keep moving at background
-	planet1_des.y += 1;
+
+void Game::update() { 	// this function is used for
+						// updates on the screen
+
+	planet1_des.y += 1; // allow planets to keep moving in the background
 	planet2_des.y += 1;
 	planet3_des.y += 1;
 	planet4_des.y += 1;
 	planet5_des.y += 1;
-	planet6_des.y += 1;
-	Sleep(10); //threading substitution
-	if (planet1_des.y == 650) {
-		planet1_des.y = -100; //reset
+	planet6_des.y += 1; 
+	Sleep(10); //delay it abit to make it move slower
+			   // threading substitution
+
+	if (planet1_des.y == 650) { // planets will rerun from the start once they reach the bottom of the window
+		planet1_des.y = -100;
 	}
 	if (planet2_des.y == 650) {
-		planet2_des.y = -100; //reset
+		planet2_des.y = -100;
 	}
 	if (planet3_des.y == 650) {
-		planet3_des.y = -100; //reset
+		planet3_des.y = -100;
 	}
 	if (planet4_des.y == 650) {
-		planet4_des.y = -100; //reset
+		planet4_des.y = -100;
 	}
 	if (planet5_des.y == 650) {
-		planet5_des.y = -100; //reset
+		planet5_des.y = -100;
 	}
 	if (planet6_des.y == 650) {
-		planet6_des.y = -100; //reset
-	}
+		planet6_des.y = -100;
+	}	
 
-	//white stars keep moving at background
+	// allow white stars to keep moving in the background
 	star_des.y += 1;
 	if (star_des.y == 0) {
 		star_des.y = -650;
 	}
 
 	if (motion_detect[MOVE_RIGHT] == true) {
-		if (ship_des.x <= 832) { //to limit someone move out of scope
-			ship_des.x += ship_speed;
-			cout << "X location is now at: " << ship_des.x << endl;
+		
+		if (ship_des.x <= 832) { // limits scope of spaceship's movement to the right
+								 // to make sure the spaceship does not move out of window
+			ship_des.x += ship_speed; 	// moves the spaceship to the right
 		}
-		else {
-			cout << "You are running out of the window at right!" << endl;
-		}
-		//move the spaceship to the right
+	
 	}
 	if (motion_detect[MOVE_LEFT] == true) {
-		if (ship_des.x >= 0) { //to limit someone move out of scope
+		
+		if (ship_des.x >= 0) {	// left
 			ship_des.x -= ship_speed;
-			cout << "X location is now at: " << ship_des.x << endl;
 		}
-		else {
-			cout << "You are running out of the window at left!" << endl;
-		}
-		//move the spaceship to the left
 	}
+	
 	if (motion_detect[SHOOT] == true) {
-		//Shoot if someone press Spacebar
+		// shoots when user presses spacebar
 		for (int i = 0; i < 5; i++) {
-			if (laser_coordinate[i] == 0 && clock() >= laser_time + 300) {
-				laser_coordinate[i] = 1;
-				laser_time = clock(); //add a time because i want to add a delay on each laser shoot
-										  //so that player cannot spam lasers.
+			if (laser_shot[i] == 0 && clock() >= laser_time + 300) {
+				laser_shot[i] = 1;
+				laser_time = clock(); 
+				// added a time argument in order to delay shooting of each laser
+			    // to prevent user from spamming lasers
 				current_x[i] = ship_des.x + 32 - 5;
 			}
 		}
 
 	}
-	//check the coordiantes of the laser constantly
+	// check the coordinates of the laser constantly
 }
 
-void Game::render() { //painter function
 
-			/* Important Note: Render has a
-			   hierarchy structure Whatever
-			   comes first will render at the bottom */
-	SDL_RenderClear(renderer); //clear the previous screen
-	SDL_RenderCopy(renderer, space, NULL, &space_des); //paint my picture!
-	SDL_RenderCopy(renderer, white_stars, NULL, &star_des); //paint my white stars!
+void Game::render() { // painter function
+
+		/* Important Note: Render has a
+		   hierarchy structure. Whatever
+		   comes first will render at the bottom */
+
+	SDL_RenderClear(renderer); // clear the previous screen
+	SDL_RenderCopy(renderer, space, NULL, &space_des); 
+	SDL_RenderCopy(renderer, white_stars, NULL, &star_des); 
 	SDL_RenderCopy(renderer, planet1, NULL, &planet1_des);
 	SDL_RenderCopy(renderer, planet2, NULL, &planet2_des);
 	SDL_RenderCopy(renderer, planet3, NULL, &planet3_des);
@@ -266,62 +305,69 @@ void Game::render() { //painter function
 	SDL_RenderCopy(renderer, end_line, NULL, &end_des);
 	SDL_RenderCopy(renderer, gameover, NULL, &game_des);
 	
-	// this is a triple for loop, which can arise a lot of problems
-	// like computational cost, run-time delays etc, for example:
-	// the lasers will slow down or speed up depends on where i put it
-	// hence, we have to be very careful
-if (confirm == true)
-	for (int laser_count = 0; laser_count < 5; laser_count++) {
+	/*
+		This is a triple for-loop, in which a lot of problems may arise,
+		such as computational costs, run-time delays etc. For instance:
+		the lasers will slow down or speed up depending on where it is placed.
+		As such, be cautious when editing this section.
+	*/
 
-		if (laser_coordinate[laser_count] == 1) {
+	for (int laser_count = 0; laser_count < 5; laser_count++) {
+	
+		//render my lasers if the respective array position is 1
+		if (laser_shot[laser_count] == 1) {
 
 			int laser_y = ship_des.y + velocity[laser_count];
-			int laser_x = current_x[laser_count];
-			//
-			velocity[laser_count] -= laser_speed; //minus because going up.
+			int laser_x = current_x[laser_count]; //current_x was updated in update() function
+												  // repeating again with laser_x just to make it intuitive
+
+			velocity[laser_count] -= laser_speed;	// minus because lasers go up
+
 			setDes(laser_des, laser_x, laser_y, 10, 30);
 			SDL_RenderCopy(renderer, laser, NULL, &laser_des);
 
-			if (laser_y <= -30) {
-				laser_coordinate[laser_count] = 0;
+			if (laser_y <= -30) { //if the laser ran out of scope
+				laser_shot[laser_count] = 0;
 				velocity[laser_count] = 0;
 			}
 
 		}
-
-		for (int i = 0; i < 3; i++) { //iterate over the 2D array
-			for (int j = 0; j < 14; j++) {
-				if (aliens_coordinate[i][j] == 1) { //if there's an alien there
-					if (time(NULL) >= time_now + 2) { //move the alien by 3 pixels every 2 seconds
-						time_now += 1; // increment the time by 2 so the condition would meet every 2 seconds
-						increment_value += (30 + alien_speed);
+		
+		// move on to second and third loop, which render my aliens with similar logics
+		for (int alien_row = 0; alien_row < 3; alien_row++) { 
+			for (int alien_column = 0; alien_column < 14; alien_column++) {
+				
+				if (aliens_coordinate[alien_row][alien_column] == 1) { //if an alien is present
+					if (time(NULL) >= time_now + 2) { // increase increment_value every 2 seconds
+						time_now = time(NULL);
+						increment_value += (3 + alien_speed); 
 					}
-
-					int alien_y = 62 * i + 100 + increment_value;
-					int alien_x = 64 * j;
+					
+					int alien_y = 62 * alien_row + 100 + increment_value; // the increment_value previously increased 
+																		  // is used here to make the aliens keep moving down
+					int alien_x = 64 * alien_column;
+					
 					setDes(alien_des, alien_x, alien_y, 62, 49);
 					SDL_RenderCopy(renderer, alien, NULL, &alien_des);
 
-
-					if (alien_y + 49 >= 570) { //touched the line
-						confirm = false;//this statement will let the 3 layers loop run the last time and will trigger the next if statement 
+					if (alien_y + 49 >= 570){  // once an alien touched the end-game line
+						confirm = false;
 					}
 
-
-					if (laser_des.x + 10 >= alien_des.x && laser_des.x <= alien_des.x + 62
-						&& laser_des.y <= alien_des.y + 49 && laser_des.y >= alien_des.y) {
-
-						//Update score
+					if (laser_des.x + 10 >= alien_des.x && laser_des.x <= alien_des.x + 62 
+					&& laser_des.y <= alien_des.y + 49 && laser_des.y >= alien_des.y) { // if laser hits alien
+						
+						// score update
 						current_score += 5;
 						text = "Score: " + to_string(current_score);
-						SDL_Surface* text_surface = TTF_RenderText_Solid(my_font, text.c_str(), my_color);
+						SDL_Surface* text_surface = TTF_RenderText_Solid(score_font, text.c_str(), score_color);
 						score_text = SDL_CreateTextureFromSurface(renderer, text_surface);
 						SDL_FreeSurface(text_surface);
-						//-------------
+						// -------------
 
-						aliens_coordinate[i][j] = 0;
+						aliens_coordinate[alien_row][alien_column] = 0;
 						alien_count -= 1;
-						laser_coordinate[laser_count] = 0;
+						laser_shot[laser_count] = 0;
 						velocity[laser_count] = 0;
 						end_game_pause = clock();
 					}
@@ -330,15 +376,12 @@ if (confirm == true)
 
 			}
 
-			// sometiems the laser blocked by alien 
-			// 
-
 		}
-		if (alien_count == 0) {
+		if (alien_count == 0) { // increase the difficulty of the game if all aliens are killed
 
-			motion_detect[SHOOT] = false; //prohibit shooting at this time
-			if (clock() >= end_game_pause + 2500) { //pause for roughly 2 seconds
-				if (alien_limit < 42) {
+			motion_detect[SHOOT] = false;  // prohibits shooting during this short pause
+			if (clock() >= end_game_pause + 2500) { // pauses for about 2.5 seconds
+				if (alien_limit < 42) { // since our limit is 42 aliens
 					alien_limit += 1;
 				}
 				spawn_alien();
@@ -346,7 +389,7 @@ if (confirm == true)
 				alien_speed += 1;
 				current_wave += 1;
 
-				//update wave
+				// update wave
 				string wave_text = "Wave " + to_string(current_wave);
 				SDL_Surface* wave_surface = TTF_RenderText_Solid(wave_font, wave_text.c_str(), wave_color);
 				w_text = SDL_CreateTextureFromSurface(renderer, wave_surface);
@@ -354,55 +397,52 @@ if (confirm == true)
 			}
 		}
 	}
-	SDL_RenderCopy(renderer, spaceship, NULL, &ship_des); //to draw on a new paper
-	SDL_RenderPresent(renderer); //start painting! 
+	SDL_RenderCopy(renderer, spaceship, NULL, &ship_des); 
+	SDL_RenderPresent(renderer); 
 
-if (confirm == false) {
-setDes(game_des, 380 , 300, 120, 80);
-SDL_RenderCopy(renderer, gameover, NULL, &game_des);
-SDL_RenderPresent(renderer); //start painting! 
-Sleep(5000);
-is_running = false;
-cout << "You lose!" << endl;
-}
+	if (confirm == false) { // the alien touched the line, player lost the game
+		setDes(game_des, 380 , 300, 120, 80);
+		SDL_RenderCopy(renderer, gameover, NULL, &game_des);
+		SDL_RenderPresent(renderer); // start painting! 
+		Sleep(5000);
+		is_running = false;
+		cout << "You lose!" << endl;
+	}
 	
 
 }
 
 void Game::spawn_alien() {
-	srand(time(NULL)); //set a seed
-	//spawn 10 aliens with the generated row and column numbers
-	//SDL_RenderCopy(renderer, alien, NULL, &alien_des);
+	srand(time(NULL)); // set a seed
+	
 	while (alien_count < alien_limit) {
-		int row = rand() % 3;
+		int row = rand() % 3; // spawn 10 aliens with the generated row and column numbers
 		int column = rand() % 14;
-		if (aliens_coordinate[row][column] == 1) { //it's an alien there 
-			//dont do anything because i already have alien here
+		if (aliens_coordinate[row][column] == 1) {  
+			// no action required since an alien is already present
 		}
 		else {
 			aliens_coordinate[row][column] = 1;
-			alien_count += 1;
+			alien_count += 1;	// add 1 if an alien is absent
 		}
 	}
 }
 
 void Game::endgame_menu() {
 
-	cout << "gameover menu" << endl;
-	SDL_RenderClear(renderer);//clear previous screen
-	SDL_RenderCopy(renderer, endMenu, NULL, &endScreen_des);//paint endmenu
-	SDL_RenderPresent(renderer);//start painting
-	Sleep(10000);
-
-	is_running = true;
-
+	SDL_RenderClear(renderer);		
+	SDL_RenderCopy(renderer, endMenu, NULL, &endScreen_des);
+	SDL_RenderPresent(renderer); // stops for 10 seconds
+	Sleep(5000);
 }
 
 bool Game::is_it_running() {
 	return is_running;
 }
-void Game::clean() { //DrAzeem mentioned before, dynamic memory allocation
-					//To prevent Memory Leak
+
+void Game::clean() { 	// this dynamic memory allocated function
+						// is used to avoid memory leak
+
 	SDL_DestroyWindow(window);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyTexture(spaceship);
@@ -421,7 +461,7 @@ void Game::clean() { //DrAzeem mentioned before, dynamic memory allocation
 	SDL_DestroyTexture(alien);
 	SDL_DestroyTexture(score_text);
 	SDL_DestroyTexture(sMenuBG);
-	SDL_DestroyTexture(scorebar);   
+	SDL_DestroyTexture(scorebar);
 	SDL_DestroyTexture(end_line);
 	SDL_Quit();
 
@@ -429,4 +469,4 @@ void Game::clean() { //DrAzeem mentioned before, dynamic memory allocation
 
 Game::~Game() {
 	cout << "Class Game has reached the end of its lifetime --- destructing..." << endl;
-}
+}	
